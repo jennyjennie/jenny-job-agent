@@ -1,0 +1,15 @@
+.env
+data/jobs.db
+data/*.db
+output/tailored_resumes/
+output/coffee_chat_messages/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.DS_Store
+*.egg-info/
+dist/
+build/
+.venv/
+venv/

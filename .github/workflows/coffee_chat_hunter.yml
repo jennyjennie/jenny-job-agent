@@ -1,0 +1,41 @@
+name: Coffee Chat Hunter
+
+on:
+  schedule:
+    # Every Monday 8AM PDT (UTC-7) = 15:00 UTC
+    - cron: '0 15 * * 1'
+  workflow_dispatch: {}
+
+jobs:
+  generate-queries:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore jobs DB from data branch
+        continue-on-error: true
+        run: |
+          git fetch origin data-branch 2>/dev/null || true
+          git checkout origin/data-branch -- data/jobs.db 2>/dev/null || true
+
+      - name: Generate LinkedIn search queries
+        run: python scripts/run_coffee_chat.py
+
+      - name: Upload search queries
+        uses: actions/upload-artifact@v4
+        with:
+          name: coffee-chat-queries-${{ github.run_number }}
+          path: output/coffee_chat_messages/
+          retention-days: 30

@@ -1,0 +1,81 @@
+name: Daily Job Hunter + Email Report
+
+on:
+  schedule:
+    # 8:00 AM PDT (UTC-7, March-Nov) = 15:00 UTC
+    # Change to '0 16 * * 1-5' during PST (Nov-Mar)
+    - cron: '0 15 * * 1-5'
+  workflow_dispatch: {}  # manual trigger for testing
+
+jobs:
+  hunt-and-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Restore DB from data branch (persistent backup, survives cache eviction)
+      - name: Restore jobs DB from data branch
+        continue-on-error: true
+        run: |
+          git fetch origin data-branch 2>/dev/null || true
+          git checkout origin/data-branch -- data/jobs.db 2>/dev/null || true
+          ls -la data/ || true
+
+      # Fallback: try GitHub Actions cache if data branch restore failed
+      - name: Restore jobs DB from cache (fallback)
+        if: ${{ !hashFiles('data/jobs.db') }}
+        uses: actions/cache@v4
+        with:
+          path: data/jobs.db
+          key: jobs-db-${{ github.run_number }}
+          restore-keys: |
+            jobs-db-
+
+      - name: Run Job Hunter (scrape → filter → dedup → score)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ secrets.CLAUDE_MODEL }}
+        run: python scripts/run_job_hunter.py
+
+      - name: Run Email Report
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: python scripts/run_email_report.py
+
+      # Persist DB to data branch so dedup history survives
+      - name: Save jobs DB to data branch
+        if: always()
+        run: |
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git fetch origin data-branch 2>/dev/null || true
+          git checkout --orphan data-branch-tmp 2>/dev/null || git checkout data-branch-tmp 2>/dev/null || true
+          git reset HEAD 2>/dev/null || true
+          mkdir -p data
+          git add -f data/jobs.db
+          git diff --cached --quiet || git commit -m "chore: update jobs DB $(date -u +%Y-%m-%d) [skip ci]"
+          git push origin HEAD:data-branch --force 2>/dev/null || true
+          git checkout ${{ github.sha }} -- . 2>/dev/null || true
+
+      # Also cache for quick same-week restores
+      - name: Cache jobs DB
+        if: always()
+        uses: actions/cache@v4
+        with:
+          path: data/jobs.db
+          key: jobs-db-${{ github.run_number }}

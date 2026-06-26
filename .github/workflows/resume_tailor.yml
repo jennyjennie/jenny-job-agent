@@ -1,0 +1,67 @@
+name: Resume Tailor
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_url:
+        description: 'Full job posting URL'
+        required: true
+        type: string
+      job_title:
+        description: 'Job title (e.g. ML Engineer)'
+        required: true
+        type: string
+      company:
+        description: 'Company name'
+        required: true
+        type: string
+      job_description:
+        description: 'Paste the full job description text here'
+        required: true
+        type: string
+      job_location:
+        description: 'Job location (e.g. Remote, San Francisco CA)'
+        required: false
+        type: string
+
+jobs:
+  tailor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore jobs DB from data branch
+        continue-on-error: true
+        run: |
+          git fetch origin data-branch 2>/dev/null || true
+          git checkout origin/data-branch -- data/jobs.db 2>/dev/null || true
+
+      - name: Run Resume Tailor
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ secrets.CLAUDE_MODEL }}
+          JOB_URL: ${{ inputs.job_url }}
+          JOB_TITLE: ${{ inputs.job_title }}
+          COMPANY: ${{ inputs.company }}
+          JOB_DESCRIPTION: ${{ inputs.job_description }}
+          JOB_LOCATION: ${{ inputs.job_location }}
+        run: python scripts/run_resume_tailor.py
+
+      - name: Upload tailored resume
+        uses: actions/upload-artifact@v4
+        with:
+          name: tailored-resume-${{ inputs.company }}-${{ github.run_number }}
+          path: output/tailored_resumes/
+          retention-days: 90
