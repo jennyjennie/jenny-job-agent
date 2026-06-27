@@ -65,12 +65,9 @@ EXCLUDE_PHRASES = [
     "no visa sponsorship",
     "green card holder",
     "permanent resident only",
-    # Staffing agency spam
+    # Staffing agency spam (full-text — catches agency names in description too)
     "geniusrecruit",
     "crossing hurdles",
-    "agrid solutions",
-    "val's services",
-    "pivotal solutions",
     # Experience requirements (5+ years = too senior for new grad)
     "5+ years",
     "5 or more years",
@@ -83,6 +80,20 @@ EXCLUDE_PHRASES = [
     "10 or more years",
     "5-10 years",
     "5 to 10 years",
+]
+
+# Checked against company name only — more aggressive than EXCLUDE_PHRASES
+# "solutions" / "consulting" safe here because we're not matching description text
+EXCLUDE_COMPANY_PHRASES = [
+    "staffing",
+    "recruiting",
+    "agency",
+    "talent",
+    "hiring",
+    "solutions",
+    "consulting",
+    "geniusrecruit",
+    "crossing hurdles",
 ]
 
 VISA_POSITIVE_SIGNALS = [

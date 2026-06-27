@@ -2,8 +2,8 @@ import pytest
 from filters.job_filter import passes_exclusion_filter, extract_visa_signals, filter_jobs
 
 
-def _job(title="ML Engineer", description=""):
-    return {"title": title, "company": "Test Co", "description": description}
+def _job(title="ML Engineer", description="", company="Test Co"):
+    return {"title": title, "company": company, "description": description}
 
 
 def _passes(job):
@@ -46,6 +46,16 @@ def test_excludes_staff_title():
 def test_excludes_director_title():
     assert not _passes(_job(title="Director of Machine Learning"))
 
+
+def test_excludes_staffing_company():
+    assert not _passes(_job(company="AgileGrid Solutions"))
+
+def test_excludes_recruiting_company():
+    assert not _passes(_job(company="CodeGeniusRecruit LLC"))
+
+def test_passes_solutions_in_description_not_company():
+    # "solutions" only blocked in company name, not description
+    assert _passes(_job(company="Anthropic", description="build ML solutions for enterprise"))
 
 def test_senior_in_description_does_not_exclude():
     # "senior" only blocked in title, not description

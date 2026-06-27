@@ -1,9 +1,10 @@
-from config.keywords import EXCLUDE_TITLE_PHRASES, EXCLUDE_PHRASES, VISA_POSITIVE_SIGNALS
+from config.keywords import EXCLUDE_TITLE_PHRASES, EXCLUDE_PHRASES, EXCLUDE_COMPANY_PHRASES, VISA_POSITIVE_SIGNALS
 
 
 def passes_exclusion_filter(job: dict) -> tuple[bool, str]:
     """Returns (passes, reason). reason is non-empty when excluded."""
     title = (job.get("title", "") or "").lower()
+    company = (job.get("company", "") or "").lower()
     description = (job.get("description", "") or "").lower()
     fulltext = title + " " + description
 
@@ -14,6 +15,10 @@ def passes_exclusion_filter(job: dict) -> tuple[bool, str]:
     for phrase in EXCLUDE_PHRASES:
         if phrase in fulltext:
             return False, f"text contains '{phrase}'"
+
+    for phrase in EXCLUDE_COMPANY_PHRASES:
+        if phrase in company:
+            return False, f"company contains '{phrase}'"
 
     return True, ""
 
