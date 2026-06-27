@@ -24,7 +24,7 @@ SCRAPE_REMOTE = True  # handled separately via is_remote=True, not as a location
 
 JOB_SITES = ["linkedin", "indeed"]
 
-RESULTS_PER_SITE = 50
+RESULTS_PER_SITE = 15
 HOURS_OLD = 26  # slightly over 24h to avoid gaps at cron boundary
 
 # Checked against job TITLE only — avoids false positives like "work with senior engineers"
@@ -65,6 +65,12 @@ EXCLUDE_PHRASES = [
     "no visa sponsorship",
     "green card holder",
     "permanent resident only",
+    # Staffing agency spam
+    "geniusrecruit",
+    "crossing hurdles",
+    "agrid solutions",
+    "val's services",
+    "pivotal solutions",
     # Experience requirements (5+ years = too senior for new grad)
     "5+ years",
     "5 or more years",
