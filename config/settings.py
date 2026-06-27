@@ -13,6 +13,9 @@ class Settings:
     claude_model: str = field(
         default_factory=lambda: os.environ.get("CLAUDE_MODEL", "claude-sonnet-4-6")
     )
+    scoring_model: str = field(
+        default_factory=lambda: os.environ.get("SCORING_MODEL", "claude-haiku-4-5-20251001")
+    )
 
     gmail_user: str = field(
         default_factory=lambda: os.environ.get("GMAIL_USER", "jennyho0221@gmail.com")

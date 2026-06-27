@@ -50,7 +50,7 @@ def _build_user_prompt(job: dict) -> str:
     title = job.get("title", "")
     company = job.get("company", "")
     location = job.get("location", "")
-    description = (job.get("description", "") or "")[:4000]
+    description = (job.get("description", "") or "")[:2000]
     visa_signals = job.get("visa_signals", [])
     return f"""Job Title: {title}
 Company: {company}
@@ -132,10 +132,12 @@ def score_jobs_batch(
     jobs: list[dict], settings: Settings
 ) -> list[tuple[dict, dict]]:
     client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+    model = settings.scoring_model
+    print(f"[Scorer] Using model: {model}")
     results = []
     for i, job in enumerate(jobs, 1):
         print(f"[Scorer] Scoring [{i}/{len(jobs)}]: {job.get('title')} @ {job.get('company')}")
-        scores = score_job(job, client, settings.claude_model)
+        scores = score_job(job, client, model)
         results.append((job, scores))
         if i < len(jobs):
             time.sleep(0.5)
