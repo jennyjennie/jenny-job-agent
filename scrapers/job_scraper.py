@@ -1,5 +1,6 @@
 import math
 import time
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from config.keywords import (
     SEARCH_KEYWORDS,
     LOCATIONS,
@@ -78,11 +79,13 @@ def scrape_all_jobs(
         for location in locations:
             combos.append((keyword, {"search_term": keyword, "location": location}))
 
+    SCRAPE_TIMEOUT = 60  # seconds per combo — prevents CI hang on rate-limited sites
+
     for i, (keyword, kwargs) in enumerate(combos, 1):
         label = kwargs.get("location", "remote")
         print(f"[Scraper] [{i}/{len(combos)}] '{keyword}' in '{label}'")
         try:
-            df = jobspy_scrape(
+            scrape_kwargs = dict(
                 site_name=JOB_SITES,
                 results_wanted=RESULTS_PER_SITE,
                 hours_old=HOURS_OLD,
@@ -91,6 +94,15 @@ def scrape_all_jobs(
                 verbose=0,
                 **kwargs,
             )
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(jobspy_scrape, **scrape_kwargs)
+                try:
+                    df = future.result(timeout=SCRAPE_TIMEOUT)
+                except FuturesTimeoutError:
+                    print(f"  [Scraper] ⏱ Timeout ({SCRAPE_TIMEOUT}s) — skipping '{keyword}' / '{label}'")
+                    future.cancel()
+                    continue
+
             if df is None or df.empty:
                 continue
             for _, row in df.iterrows():
