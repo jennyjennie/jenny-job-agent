@@ -6,30 +6,58 @@
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; margin: 0; padding: 20px; color: #333; }
   .container { max-width: 700px; margin: 0 auto; }
+
+  /* Header */
   .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px 28px; border-radius: 12px 12px 0 0; }
   .header h1 { margin: 0 0 4px; font-size: 22px; }
   .header p { margin: 0; opacity: 0.85; font-size: 14px; }
-  .stats-bar { background: white; padding: 16px 28px; display: flex; gap: 24px; border-bottom: 1px solid #e8e8e8; }
-  .stat { text-align: center; }
+
+  /* Stats bar */
+  .stats-bar { background: white; padding: 16px 28px; display: flex; gap: 0; border-bottom: 1px solid #e8e8e8; }
+  .stat { text-align: center; flex: 1; padding: 0 8px; border-right: 1px solid #f0f0f0; }
+  .stat:last-child { border-right: none; }
   .stat .num { font-size: 24px; font-weight: 700; color: #667eea; }
-  .stat .label { font-size: 11px; color: #888; text-transform: uppercase; }
+  .stat .label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Job cards */
   .jobs-list { background: white; border-radius: 0 0 12px 12px; overflow: hidden; }
-  .job-card { padding: 20px 28px; border-bottom: 1px solid #f0f0f0; }
+  .job-card { padding: 22px 28px; border-bottom: 1px solid #f0f0f0; }
   .job-card:last-child { border-bottom: none; }
-  .job-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-  .job-title { font-size: 16px; font-weight: 600; margin: 0 0 2px; }
-  .job-meta { font-size: 13px; color: #666; }
-  .score-badge { padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; white-space: nowrap; }
-  .score-green { background: #d4edda; color: #155724; }
+
+  /* Title row */
+  .job-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .job-title { font-size: 16px; font-weight: 600; margin: 0 0 3px; line-height: 1.3; }
+  .job-meta { font-size: 12px; color: #888; }
+
+  /* Overall score badge */
+  .score-badge { padding: 5px 14px; border-radius: 20px; font-size: 14px; font-weight: 700; white-space: nowrap; margin-left: 12px; flex-shrink: 0; }
+  .score-green  { background: #d4edda; color: #155724; }
   .score-yellow { background: #fff3cd; color: #856404; }
   .score-orange { background: #ffe0cc; color: #7d3500; }
-  .visa-chip { display: inline-block; background: #e8f4f8; color: #0077b6; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-right: 4px; margin-top: 4px; }
-  .score-breakdown { display: flex; gap: 12px; margin: 10px 0; flex-wrap: wrap; }
-  .score-item { font-size: 12px; color: #666; }
-  .score-item span { font-weight: 600; color: #444; }
-  .jd-summary { font-size: 13px; color: #555; margin: 8px 0; line-height: 1.5; }
-  .recommendation { font-size: 13px; color: #2d6a4f; background: #f0faf4; padding: 8px 12px; border-radius: 6px; border-left: 3px solid #52b788; margin: 8px 0; }
-  .apply-btn { display: inline-block; margin-top: 10px; padding: 8px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; }
+
+  /* Visa chips */
+  .visa-row { margin: 8px 0 12px; }
+  .visa-chip { display: inline-block; background: #e8f4f8; color: #0077b6; font-size: 11px; padding: 2px 9px; border-radius: 10px; margin-right: 4px; }
+
+  /* Score breakdown — 4-column grid */
+  .score-grid { display: table; width: 100%; border-collapse: separate; border-spacing: 8px 0; margin: 12px 0 16px; }
+  .score-cell { display: table-cell; width: 25%; background: #f8f8fc; border-radius: 8px; padding: 8px 10px; text-align: center; vertical-align: middle; }
+  .score-cell .sc-label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 3px; }
+  .score-cell .sc-value { font-size: 18px; font-weight: 700; color: #444; display: block; }
+  .score-cell.sc-good  .sc-value { color: #2d6a4f; }
+  .score-cell.sc-mid   .sc-value { color: #856404; }
+  .score-cell.sc-low   .sc-value { color: #b94a48; }
+
+  /* Divider between scores and summary */
+  .section-divider { border: none; border-top: 1px dashed #e8e8e8; margin: 0 0 12px; }
+
+  /* Summary & recommendation */
+  .jd-summary { font-size: 13px; color: #555; margin: 0 0 10px; line-height: 1.6; }
+  .recommendation { font-size: 13px; color: #2d6a4f; background: #f0faf4; padding: 9px 13px; border-radius: 6px; border-left: 3px solid #52b788; margin: 0 0 12px; line-height: 1.5; }
+
+  /* Apply button */
+  .apply-btn { display: inline-block; padding: 8px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-size: 13px; font-weight: 600; }
+
   .footer { text-align: center; color: #aaa; font-size: 12px; padding: 20px; }
 </style>
 </head>
@@ -49,46 +77,140 @@
 
   <div class="jobs-list">
     {% for job in jobs %}
+    {% set overall = (job.overall_score or 0) %}
+    {% set skill   = (job.skill_match_score or 0) %}
+    {% set visa    = (job.visa_friendly_score or 0) %}
+    {% set rel     = (job.relevance_score or 0) %}
+    {% set comp    = (job.competition_score or 0) %}
     <div class="job-card">
+
+      <!-- Title + overall badge -->
       <div class="job-header">
         <div>
           <div class="job-title">{{ job.title }}</div>
-          <div class="job-meta">{{ job.company }} &nbsp;·&nbsp; {{ job.location or 'Location N/A' }} &nbsp;·&nbsp; {{ job.source }}</div>
+          <div class="job-meta">{{ job.company }} &nbsp;·&nbsp; {{ job.location or 'N/A' }} &nbsp;·&nbsp; {{ job.source }}</div>
         </div>
-        <span class="score-badge {% if (job.overall_score or 0) >= 8 %}score-green{% elif (job.overall_score or 0) >= 6 %}score-yellow{% else %}score-orange{% endif %}">
-          {{ "%.1f"|format(job.overall_score or 0) }}/10
+        <span class="score-badge {% if overall >= 8 %}score-green{% elif overall >= 6 %}score-yellow{% else %}score-orange{% endif %}">
+          {{ "%.1f"|format(overall) }}/10
         </span>
       </div>
 
+      <!-- Visa chips -->
       {% if job.visa_signals %}
-      <div>
+      <div class="visa-row">
         {% for signal in (job.visa_signals | fromjson) %}
         <span class="visa-chip">{{ signal }}</span>
         {% endfor %}
       </div>
       {% endif %}
 
-      <div class="score-breakdown">
-        <div class="score-item">Skills: <span>{{ "%.1f"|format(job.skill_match_score or 0) }}</span></div>
-        <div class="score-item">Visa: <span>{{ "%.1f"|format(job.visa_friendly_score or 0) }}</span></div>
-        <div class="score-item">Relevance: <span>{{ "%.1f"|format(job.relevance_score or 0) }}</span></div>
-        <div class="score-item">Competition: <span>{{ "%.1f"|format(job.competition_score or 0) }}</span></div>
+      <!-- 4-column score grid -->
+      <div class="score-grid">
+        <div class="score-cell {% if skill >= 7 %}sc-good{% elif skill >= 5 %}sc-mid{% else %}sc-low{% endif %}">
+          <span class="sc-label">Skills</span>
+          <span class="sc-value">{{ "%.1f"|format(skill) }}</span>
+        </div>
+        <div class="score-cell {% if visa >= 7 %}sc-good{% elif visa >= 5 %}sc-mid{% else %}sc-low{% endif %}">
+          <span class="sc-label">Visa</span>
+          <span class="sc-value">{{ "%.1f"|format(visa) }}</span>
+        </div>
+        <div class="score-cell {% if rel >= 7 %}sc-good{% elif rel >= 5 %}sc-mid{% else %}sc-low{% endif %}">
+          <span class="sc-label">Relevance</span>
+          <span class="sc-value">{{ "%.1f"|format(rel) }}</span>
+        </div>
+        <div class="score-cell {% if comp <= 4 %}sc-good{% elif comp <= 7 %}sc-mid{% else %}sc-low{% endif %}">
+          <span class="sc-label">Competition</span>
+          <span class="sc-value">{{ "%.1f"|format(comp) }}</span>
+        </div>
       </div>
 
+      <!-- Divider -->
+      <hr class="section-divider">
+
+      <!-- JD summary -->
       {% if job.jd_summary %}
       <div class="jd-summary">{{ job.jd_summary }}</div>
       {% endif %}
 
+      <!-- Recommendation -->
       {% if job.recommendation %}
       <div class="recommendation">{{ job.recommendation }}</div>
       {% endif %}
 
-      {% if job.url %}
       <a href="{{ job.url }}" class="apply-btn">View &amp; Apply →</a>
-      {% endif %}
+
     </div>
     {% endfor %}
   </div>
+
+  <!-- ── Tailored Resume Bullets ───────────────────────── -->
+  {% if tailored_results %}
+  <div style="margin-top:24px;">
+    <div style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);color:white;padding:20px 28px;border-radius:12px 12px 0 0;">
+      <h2 style="margin:0 0 4px;font-size:18px;">Tailored Resume Bullets</h2>
+      <p style="margin:0;opacity:.85;font-size:13px;">Auto-generated for your top {{ tailored_results | length }} jobs — copy &amp; paste directly into your resume</p>
+    </div>
+
+    {% for item in tailored_results %}
+    {% set tj = item.job %}
+    {% set tr = item.result %}
+    <div style="background:white;padding:22px 28px;border-bottom:1px solid #f0f0f0;{% if loop.last %}border-radius:0 0 12px 12px;{% endif %}">
+
+      <!-- Job header -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:#333;">
+            <a href="{{ tj.url }}" style="color:#667eea;text-decoration:none;">{{ tj.title }}</a>
+          </div>
+          <div style="font-size:12px;color:#888;margin-top:2px;">{{ tj.company }} &nbsp;·&nbsp; {{ tj.location or 'N/A' }}</div>
+        </div>
+        <span style="background:#f3f0ff;color:#5a3fd6;font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;white-space:nowrap;margin-left:12px;">
+          {{ "%.1f"|format(tj.overall_score or 0) }}/10
+        </span>
+      </div>
+
+      <!-- Missing keywords -->
+      {% if tr.missing_keywords %}
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Add to resume</div>
+        {% for kw in tr.missing_keywords %}
+        <span style="display:inline-block;background:#fff0f3;color:#c0392b;font-size:11px;padding:2px 9px;border-radius:10px;margin:2px 3px 2px 0;border:1px solid #ffd0d8;">{{ kw }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Summary suggestion -->
+      {% if tr.summary_suggestion %}
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Suggested Summary</div>
+        <div style="font-size:13px;color:#444;background:#fafafa;padding:10px 13px;border-radius:6px;border-left:3px solid #667eea;line-height:1.6;">{{ tr.summary_suggestion }}</div>
+      </div>
+      {% endif %}
+
+      <!-- Tailored bullets -->
+      {% if tr.tailored_bullets %}
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Bullet Points</div>
+        {% for bullet in tr.tailored_bullets %}
+        <div style="font-size:13px;color:#333;padding:5px 0 5px 4px;border-bottom:1px solid #f5f5f5;line-height:1.6;">{{ bullet }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Papers to highlight -->
+      {% if tr.papers_to_highlight %}
+      <div style="margin-top:10px;">
+        <div style="font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Highlight These Papers</div>
+        {% for paper in tr.papers_to_highlight %}
+        <div style="font-size:12px;color:#5a3fd6;padding:2px 0;">📄 {{ paper }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 
   <div class="footer">
     Generated by Jenny's Job Agent &nbsp;·&nbsp; {{ date }}<br>

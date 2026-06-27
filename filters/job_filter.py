@@ -1,30 +1,36 @@
-from config.keywords import EXCLUDE_PHRASES, VISA_POSITIVE_SIGNALS
+from config.keywords import EXCLUDE_TITLE_PHRASES, EXCLUDE_PHRASES, VISA_POSITIVE_SIGNALS
 
 
-def _normalize(job: dict) -> str:
-    title = job.get("title", "") or ""
-    description = job.get("description", "") or ""
-    return (title + " " + description).lower()
+def passes_exclusion_filter(job: dict) -> tuple[bool, str]:
+    """Returns (passes, reason). reason is non-empty when excluded."""
+    title = (job.get("title", "") or "").lower()
+    description = (job.get("description", "") or "").lower()
+    fulltext = title + " " + description
 
+    for phrase in EXCLUDE_TITLE_PHRASES:
+        if phrase in title:
+            return False, f"title contains '{phrase}'"
 
-def passes_exclusion_filter(job: dict) -> bool:
-    text = _normalize(job)
     for phrase in EXCLUDE_PHRASES:
-        if phrase in text:
-            return False
-    return True
+        if phrase in fulltext:
+            return False, f"text contains '{phrase}'"
+
+    return True, ""
 
 
 def extract_visa_signals(job: dict) -> list[str]:
-    text = _normalize(job)
-    return [signal for signal in VISA_POSITIVE_SIGNALS if signal in text]
+    fulltext = ((job.get("title", "") or "") + " " + (job.get("description", "") or "")).lower()
+    return [signal for signal in VISA_POSITIVE_SIGNALS if signal in fulltext]
 
 
-def filter_jobs(jobs: list[dict]) -> list[dict]:
+def filter_jobs(jobs: list[dict], verbose: bool = False) -> list[dict]:
     results = []
     excluded = 0
     for job in jobs:
-        if not passes_exclusion_filter(job):
+        passes, reason = passes_exclusion_filter(job)
+        if not passes:
+            if verbose:
+                print(f"  [Filter] EXCLUDED: {job.get('title')} @ {job.get('company')} — {reason}")
             excluded += 1
             continue
         job["visa_signals"] = extract_visa_signals(job)

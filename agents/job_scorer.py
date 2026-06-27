@@ -24,10 +24,11 @@ Jenny's profile:
 Score the job on four axes (each 0.0 to 10.0):
 1. skill_match: Does Jenny's actual skill set (PyTorch, LLM fine-tuning, FastAPI, Python, inference) match what this JD requires?
 2. visa_friendly: How likely is this employer to sponsor OPT/H1B?
-   - 10 = explicitly offers sponsorship
-   - 7 = startup or no mention (often flexible)
-   - 3 = large corp with no sponsorship mention (hit or miss)
-   - 0 = explicitly excludes or requires existing US work auth
+   - 10 = explicitly states visa sponsorship available
+   - 8 = large well-known tech company (Google, Amazon, Meta, Apple, Microsoft, Nvidia, Adobe, Salesforce, etc.) — these have established sponsorship programs and routinely hire international students
+   - 7 = mid-size tech company (500–5000 employees) with no mention — likely sponsors
+   - 5 = small startup (<100 employees) with no mention — uncertain, depends on funding stage
+   - 0 = explicitly states no sponsorship / "will not sponsor" / "US Citizen only" / Security Clearance required
 3. relevance: How well does this role fit Jenny's ML/AI/LLM research trajectory?
    - 10 = LLM research engineer / applied scientist / ML infra
    - 7 = general ML engineer / AI platform
@@ -77,23 +78,59 @@ def _call_claude(client: anthropic.Anthropic, model: str, user_prompt: str) -> s
     return response.content[0].text
 
 
-def score_job(job: dict, client: anthropic.Anthropic, model: str) -> dict | None:
+_DEFAULT_SCORES = {
+    "skill_match": 5.0,
+    "visa_friendly": 5.0,
+    "relevance": 5.0,
+    "competition": 5.0,
+    "overall": 5.0,
+    "jd_summary": "Score unavailable — parse error.",
+    "recommendation": "Manual review recommended.",
+}
+
+
+def _strip_markdown_fence(text: str) -> str:
+    """Remove ```json ... ``` or ``` ... ``` fences if present."""
+    text = text.strip()
+    if text.startswith("```"):
+        # Drop the opening fence line and the closing ```
+        lines = text.splitlines()
+        lines = lines[1:]  # drop ```json or ```
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        text = "\n".join(lines).strip()
+    return text
+
+
+def _parse_scores(raw: str) -> dict:
+    return json.loads(_strip_markdown_fence(raw))
+
+
+def score_job(job: dict, client: anthropic.Anthropic, model: str) -> dict:
+    label = f"{job.get('title')} @ {job.get('company')}"
     user_prompt = _build_user_prompt(job)
-    try:
-        raw = _call_claude(client, model, user_prompt)
-        scores = json.loads(raw)
-        return scores
-    except json.JSONDecodeError as e:
-        print(f"[Scorer] JSON parse error for {job.get('title')}: {e}")
-        return None
-    except Exception as e:
-        print(f"[Scorer] Error scoring {job.get('title')} @ {job.get('company')}: {e}")
-        return None
+
+    for attempt in range(1, 3):  # up to 2 attempts
+        try:
+            raw = _call_claude(client, model, user_prompt)
+            return _parse_scores(raw)
+        except json.JSONDecodeError as e:
+            print(f"[Scorer] JSON parse error (attempt {attempt}/2) for {label}: {e}")
+            if attempt == 1:
+                time.sleep(2)
+                continue
+            print(f"[Scorer] Giving up on {label} — using default scores (5.0)")
+            return _DEFAULT_SCORES.copy()
+        except Exception as e:
+            print(f"[Scorer] API error for {label}: {e}")
+            return _DEFAULT_SCORES.copy()
+
+    return _DEFAULT_SCORES.copy()  # unreachable, but satisfies type checker
 
 
 def score_jobs_batch(
     jobs: list[dict], settings: Settings
-) -> list[tuple[dict, dict | None]]:
+) -> list[tuple[dict, dict]]:
     client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
     results = []
     for i, job in enumerate(jobs, 1):

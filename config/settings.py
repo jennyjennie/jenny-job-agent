@@ -31,6 +31,9 @@ class Settings:
     resume_path: str = field(
         default_factory=lambda: os.environ.get("RESUME_PATH", "data/jennyho_base_resume.pdf")
     )
+    resume_docx_path: str = field(
+        default_factory=lambda: os.environ.get("RESUME_DOCX_PATH", "data/jennyho_base_resume.docx")
+    )
     output_dir: str = "output"
 
     min_overall_score: float = field(

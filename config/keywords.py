@@ -13,7 +13,6 @@ SEARCH_KEYWORDS = [
 ]
 
 LOCATIONS = [
-    "Remote",
     "Los Angeles, CA",
     "San Francisco, CA",
     "Seattle, WA",
@@ -21,12 +20,32 @@ LOCATIONS = [
     "Austin, TX",
 ]
 
-JOB_SITES = ["linkedin", "indeed", "zip_recruiter"]
+SCRAPE_REMOTE = True  # handled separately via is_remote=True, not as a location string
+
+JOB_SITES = ["linkedin", "indeed"]
 
 RESULTS_PER_SITE = 50
 HOURS_OLD = 26  # slightly over 24h to avoid gaps at cron boundary
 
+# Checked against job TITLE only — avoids false positives like "work with senior engineers"
+EXCLUDE_TITLE_PHRASES = [
+    "senior",
+    "sr.",
+    "lead",
+    "staff",
+    "principal",
+    "distinguished",
+    "director",
+    "manager",
+    "head of",
+    "vp of",
+    "vice president",
+    "architect",
+]
+
+# Checked against full text (title + description)
 EXCLUDE_PHRASES = [
+    # Visa / citizenship blockers
     "us citizen only",
     "u.s. citizen only",
     "citizenship required",
@@ -44,16 +63,20 @@ EXCLUDE_PHRASES = [
     "must be authorized to work in the us without",
     "must be authorized to work in the united states without",
     "no visa sponsorship",
-    "10+ years",
-    "10 or more years",
-    "8+ years",
-    "7+ years",
-    "senior staff engineer",
-    "principal engineer",
-    "distinguished engineer",
-    "staff research scientist",
     "green card holder",
     "permanent resident only",
+    # Experience requirements (5+ years = too senior for new grad)
+    "5+ years",
+    "5 or more years",
+    "minimum 5 years",
+    "at least 5 years",
+    "6+ years",
+    "7+ years",
+    "8+ years",
+    "10+ years",
+    "10 or more years",
+    "5-10 years",
+    "5 to 10 years",
 ]
 
 VISA_POSITIVE_SIGNALS = [

@@ -1,7 +1,7 @@
 import json
 import pytest
-from unittest.mock import MagicMock, patch
-from agents.job_scorer import score_job, _build_user_prompt
+from unittest.mock import MagicMock, call
+from agents.job_scorer import score_job, _build_user_prompt, _strip_markdown_fence, _DEFAULT_SCORES
 
 
 def _mock_client(response_text: str):
@@ -44,10 +44,53 @@ def test_score_job_valid_response():
     assert "recommendation" in result
 
 
-def test_score_job_invalid_json_returns_none():
+def test_score_job_markdown_fence_stripped():
+    fenced = f"```json\n{json.dumps(_VALID_SCORES)}\n```"
+    client = _mock_client(fenced)
+    result = score_job(_sample_job(), client, "claude-sonnet-4-6")
+    assert result["skill_match"] == 8.5
+
+
+def test_strip_markdown_fence_plain():
+    raw = f"```\n{json.dumps(_VALID_SCORES)}\n```"
+    assert json.loads(_strip_markdown_fence(raw))["skill_match"] == 8.5
+
+
+def test_strip_markdown_fence_noop():
+    raw = json.dumps(_VALID_SCORES)
+    assert _strip_markdown_fence(raw) == raw
+
+
+def test_score_job_invalid_json_retries_then_returns_default():
+    # Both attempts return unparseable text → should return default scores
     client = _mock_client("This is not JSON at all")
     result = score_job(_sample_job(), client, "claude-sonnet-4-6")
-    assert result is None
+    assert result["overall"] == _DEFAULT_SCORES["overall"]
+    assert result["jd_summary"] == _DEFAULT_SCORES["jd_summary"]
+    # Should have retried exactly twice
+    assert client.messages.create.call_count == 2
+
+
+def test_score_job_succeeds_on_retry():
+    # First call returns bad JSON, second call returns valid JSON
+    good = json.dumps(_VALID_SCORES)
+    responses = ["not json", good]
+    idx = {"i": 0}
+
+    def side_effect(**kwargs):
+        text = responses[idx["i"]]
+        idx["i"] += 1
+        mock_content = MagicMock()
+        mock_content.text = text
+        mock_response = MagicMock()
+        mock_response.content = [mock_content]
+        return mock_response
+
+    client = MagicMock()
+    client.messages.create.side_effect = side_effect
+    result = score_job(_sample_job(), client, "claude-sonnet-4-6")
+    assert result["skill_match"] == 8.5
+    assert client.messages.create.call_count == 2
 
 
 def test_build_user_prompt_contains_job_info():

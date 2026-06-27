@@ -47,6 +47,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_MODEL: ${{ secrets.CLAUDE_MODEL }}
+          SEND_EMAIL_AFTER_HUNT: "0"
         run: python scripts/run_job_hunter.py
 
       - name: Run Email Report

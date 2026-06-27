@@ -6,6 +6,7 @@ from config.keywords import (
     JOB_SITES,
     RESULTS_PER_SITE,
     HOURS_OLD,
+    SCRAPE_REMOTE,
 )
 from config.settings import Settings
 
@@ -51,42 +52,56 @@ def deduplicate_within_batch(jobs: list[dict]) -> list[dict]:
     return result
 
 
-def scrape_all_jobs(settings: Settings) -> list[dict]:
+def scrape_all_jobs(
+    settings: Settings,
+    keywords_override: list[str] | None = None,
+    locations_override: list[str] | None = None,
+    scrape_remote_override: bool | None = None,
+) -> list[dict]:
     try:
         from jobspy import scrape_jobs as jobspy_scrape
     except ImportError:
         raise ImportError("Install python-jobspy: pip install python-jobspy")
 
-    all_jobs: list[dict] = []
-    total_combos = len(SEARCH_KEYWORDS) * len(LOCATIONS)
-    done = 0
+    keywords = keywords_override if keywords_override is not None else SEARCH_KEYWORDS
+    locations = locations_override if locations_override is not None else LOCATIONS
+    do_remote = scrape_remote_override if scrape_remote_override is not None else SCRAPE_REMOTE
 
-    for keyword in SEARCH_KEYWORDS:
-        for location in LOCATIONS:
-            done += 1
-            print(f"[Scraper] [{done}/{total_combos}] '{keyword}' in '{location}'")
-            try:
-                df = jobspy_scrape(
-                    site_name=JOB_SITES,
-                    search_term=keyword,
-                    location=location,
-                    results_wanted=RESULTS_PER_SITE,
-                    hours_old=HOURS_OLD,
-                    country_indeed="USA",
-                    linkedin_fetch_description=True,
-                    verbose=0,
-                )
-                if df is None or df.empty:
-                    continue
-                for _, row in df.iterrows():
-                    job = normalize_job(row.to_dict(), source=keyword)
-                    if job["title"] and job["company"] and job["url"]:
-                        all_jobs.append(job)
-                print(f"  → {len(df)} raw results")
-                time.sleep(2)  # polite delay between requests
-            except Exception as e:
-                print(f"  [Scraper] Error for '{keyword}' / '{location}': {e}")
+    all_jobs: list[dict] = []
+
+    # Build the list of (label, jobspy_kwargs) combos to run
+    combos: list[tuple[str, dict]] = []
+    if do_remote:
+        for keyword in keywords:
+            combos.append((keyword, {"search_term": keyword, "is_remote": True}))
+    for keyword in keywords:
+        for location in locations:
+            combos.append((keyword, {"search_term": keyword, "location": location}))
+
+    for i, (keyword, kwargs) in enumerate(combos, 1):
+        label = kwargs.get("location", "remote")
+        print(f"[Scraper] [{i}/{len(combos)}] '{keyword}' in '{label}'")
+        try:
+            df = jobspy_scrape(
+                site_name=JOB_SITES,
+                results_wanted=RESULTS_PER_SITE,
+                hours_old=HOURS_OLD,
+                country_indeed="USA",
+                linkedin_fetch_description=True,
+                verbose=0,
+                **kwargs,
+            )
+            if df is None or df.empty:
                 continue
+            for _, row in df.iterrows():
+                job = normalize_job(row.to_dict(), source=keyword)
+                if job["title"] and job["company"] and job["url"]:
+                    all_jobs.append(job)
+            print(f"  → {len(df)} raw results")
+            time.sleep(2)
+        except Exception as e:
+            print(f"  [Scraper] Error for '{keyword}' / '{label}': {e}")
+            continue
 
     deduped = deduplicate_within_batch(all_jobs)
     print(f"[Scraper] Total: {len(all_jobs)} raw → {len(deduped)} after batch dedup")
