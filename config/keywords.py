@@ -91,7 +91,6 @@ EXCLUDE_COMPANY_PHRASES = [
     "talent",
     "hiring",
     "solutions",
-    "consulting",
     "geniusrecruit",
     "crossing hurdles",
 ]
